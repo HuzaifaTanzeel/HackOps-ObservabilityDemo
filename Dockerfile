@@ -1,14 +1,22 @@
-# Use an official OpenJDK runtime as a parent image
+# ---------- Stage 1: Build ----------
+FROM maven:3.9.8-eclipse-temurin-17 AS builder
+
+WORKDIR /app
+COPY . .
+
+# Build and rename final JAR to app.jar
+RUN mvn clean package -DskipTests -DfinalName=app
+
+# ---------- Stage 2: Run ----------
 FROM openjdk:17-jdk-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy built jar to /app
-COPY target/hackops-observabilitydemo-0.0.1-SNAPSHOT.jar app.jar
+# Copy built JAR from previous stage
+COPY --from=builder /app/target/app.jar app.jar
 
-# Expose port 8080
+# Expose Spring Boot port
 EXPOSE 8080
 
-# Run the jar file
+# Run app
 ENTRYPOINT ["java", "-jar", "app.jar"]
